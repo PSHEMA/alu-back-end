@@ -1,23 +1,27 @@
 #!/usr/bin/python3
-"""Python script to export data in the CSV format"""
+""" Library to gather data from an API """
+
+import requests
+import sys
 
 if __name__ == "__main__":
+    employee_id = sys.argv[1]
+    url = "https://jsonplaceholder.typicode.com/users/{}".format(employee_id)
+    todo = "https://jsonplaceholder.typicode.com/todos?userId={}"
+    todo = todo.format(employee_id)
 
-    import csv
-    import requests
-    import sys
+    user_info = requests.request("GET", url).json()
+    todo_info = requests.request("GET", todo).json()
 
-    userId = sys.argv[1]
-    user = requests.get("https://jsonplaceholder.typicode.com/users/{}"
-                        .format(userId))
-    name = user.json().get('username')
-    todos = requests.get('https://jsonplaceholder.typicode.com/todos')
+    employee_name = user_info.get("name")
+    employee_username = user_info.get("username")
+    total_tasks = list(filter(lambda x: (x["completed"] is True), todo_info))
+    task_com = len(total_tasks)
+    total_task_done = len(todo_info)
 
-    filename = userId + '.csv'
-    with open(filename, mode='w') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"',
-                            quoting=csv.QUOTE_ALL, lineterminator='\n')
-        for task in todos.json():
-            if task.get('userId') == int(userId):
-                writer.writerow([userId, name, str(task.get('completed')),
-                                 task.get('title')])
+    with open(str(employee_id) + '.csv', "w") as f:
+        [f.write('"' + str(employee_id) + '",' +
+                 '"' + employee_username + '",' +
+                 '"' + str(task["completed"]) + '",' +
+                 '"' + task["title"] + '",' + "\n")
+         for task in todo_info]
